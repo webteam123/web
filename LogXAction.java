@@ -11,19 +11,19 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 public class LogXAction extends DispatchAction {
-	
+
 	/** 前台登录判断 */
 	public ActionForward isUserLogin(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response){
 		HttpSession session=request.getSession();
 		Object loginer=session.getAttribute("logoner");
-		if(loginer!=null&&(loginer instanceof UserForm)){			
+		if(loginer!=null&&(loginer instanceof UserForm)){
 			ActionMessages messages=new ActionMessages();
 			messages.add("loginR",new ActionMessage("luntan.bbs.have.login"));
 			saveErrors(request,messages);
 			return mapping.findForward("FhaveLogin");
 		}
 		else{
-			return mapping.findForward("noLogin");			
+			return mapping.findForward("noLogin");
 		}
 	}
 	/** 后台登录判断 */
@@ -35,43 +35,43 @@ public class LogXAction extends DispatchAction {
 			UserForm logoner=(UserForm)obj;
 			String able=logoner.getUserAble();
 
-			if(!able.equals("2")){				
+			if(!able.equals("2")){
 				messages.add("loginR",new ActionMessage("luntan.bbs.loginBack.N"));
 				saveErrors(request,messages);
-				return mapping.findForward("noAble");				
+				return mapping.findForward("noAble");
 			}
 			else{
 				return mapping.findForward("BhaveLogin");
 			}
 		}
-		else{			
+		else{
 			messages.add("loginR",new ActionMessage("luntan.bbs.loginBack.E"));
 			saveErrors(request,messages);
-			return mapping.findForward("noLogin");			
+			return mapping.findForward("noLogin");
 		}
-	}	
+	}
 	/** 登录 */
 	public ActionForward login(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response){
 		HttpSession session=request.getSession();
 		UserForm logoner=(UserForm)form;
 		String userName=Change.HTMLChange(logoner.getUserName());
 		String userPassword=Change.HTMLChange(logoner.getUserPassword());
-		
+
 		String sql="select * from tb_user where user_name=? and user_password=?";
 		Object[] params={userName,userPassword};
-		
+
 		ActionMessages messages=new ActionMessages();
 		OpDB myOp=new OpDB();
 		logoner=myOp.OpUserSingleShow(sql, params);
-		if(logoner!=null){			
+		if(logoner!=null){
 			session.setAttribute("logoner",logoner);
 			return (mapping.findForward("success"));
 		}
-		else{			
+		else{
 			messages.add("loginR",new ActionMessage("luntan.bbs.login.E"));
 			saveErrors(request,messages);
 			return mapping.findForward("fault");
-		}		
+		}
 	}
 	/** 注销 */
 	public ActionForward logout(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response){
@@ -84,37 +84,40 @@ public class LogXAction extends DispatchAction {
 		ActionMessages messages=new ActionMessages();
 		HttpSession session=request.getSession();
 		session.setAttribute("mainPage","../pages/userReg.jsp");
-		
+
 		String validate=request.getParameter("validate");
 		if(validate==null||validate.equals("")||!validate.equals("yes")){
 			return mapping.findForward("result");
 		}
-		else{			
+		else{
 			UserForm regForm=(UserForm)form;
-			
+
 			String pass1=regForm.getUserPassword();
 			String pass2=regForm.getAginPassword();
 			if(!pass1.equals(pass2)){
 				System.out.println("两次输入的密码不一致！");
 				messages.add("userPassword",new ActionMessage("luntan.user.reg.pass.noEquals"));
-				saveErrors(request,messages);				
+				saveErrors(request,messages);
 			}
 			else{
 				String userName=Change.HTMLChange(regForm.getUserName());
-				
+
 				Object[] params=null;
+				Object[] params1=null;
 				String sql="";
-				
+				String sql1="";
+
 				sql="select * from tb_user where user_name=?";
 				params=new Object[1];
 				params[0]=userName;
-				
+
 				OpDB myOp=new OpDB();
 				UserForm user=myOp.OpUserSingleShow(sql, params);
-				
+
 				if(user!=null){
 					System.out.println(userName+" 用户已经存在！");
 					messages.add("userOpR",new ActionMessage("luntan.user.reg.exist",userName));
+					saveErrors(request,messages);
 				}
 				else{
 					String userPassword=Change.HTMLChange(regForm.getUserPassword());
@@ -125,8 +128,8 @@ public class LogXAction extends DispatchAction {
 					String userEmail=regForm.getUserEmail();
 					String userFrom=Change.HTMLChange(regForm.getUserFrom());
 					String userAble="0";
-					
-					sql="insert into tb_user values(null,?,?,?,?,?,?,?,?,?)";
+
+					sql="insert into tb_user values(null,?,?,?,?,?,?,?,?,?,0)";
 					params=new Object[9];
 					params[0]=userName;
 					params[1]=userPassword;
@@ -137,8 +140,7 @@ public class LogXAction extends DispatchAction {
 					params[6]=userEmail;
 					params[7]=userFrom;
 					params[8]=userAble;
-					
-					int i=myOp.OpUpdate(sql, params);				
+					int i=myOp.OpUpdate(sql, params);
 					if(i<=0){
 						System.out.println("用户注册失败！");
 						messages.add("userOpR",new ActionMessage("luntan.user.reg.E"));
@@ -147,11 +149,11 @@ public class LogXAction extends DispatchAction {
 						System.out.println("用户注册成功！");
 						regForm.clear();
 						messages.add("userOpR",new ActionMessage("luntan.user.reg.S"));
-					}				
-					saveErrors(request,messages);		
-				}				
-			}			
-			return mapping.findForward("result");		
+					}
+					saveErrors(request,messages);
+				}
+			}
+			return mapping.findForward("result");
 		}
-	}	
+	}
 }
