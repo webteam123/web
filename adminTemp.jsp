@@ -7,10 +7,9 @@
   if(backMainPage==null||backMainPage.equals(""))
 	  backMainPage="default.jsp";
 %>
-
 <html>
   <head>
-    <title>编程体验BBS-论坛 后台</title>
+    <title>卤脿鲁脤脤氓脩茅BBS-脗脹脤鲁 潞贸脤篓</title>
     <base href="<%=basePath%>">
     <link type="text/css" rel="stylesheet" href="css/style.css">
     <script type="text/javascript" src="js/bbs.js"></script>  
