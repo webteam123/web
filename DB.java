@@ -13,7 +13,7 @@ public class DB {
 	private String password;
 	private Connection con;
 	private PreparedStatement pstm;
-	
+
 	public DB(){
 		className="com.mysql.jdbc.Driver";
 		url="jdbc:mysql://localhost:3306/db_bbs";
@@ -53,9 +53,9 @@ public class DB {
 			}
 		}
 	}
-	
+
 	public ResultSet getRs(){
-		try {			
+		try {
 			return pstm.getResultSet();
 		} catch (SQLException e) {
 			System.out.println("DB类中的getRs()方法出错！");
@@ -63,17 +63,17 @@ public class DB {
 			return null;
 		}
 
-	}	
-	
+	}
+
 	public int getUpdate(){
 		try {
 			return pstm.getUpdateCount();
-		} catch (SQLException e) {			
+		} catch (SQLException e) {
 			e.printStackTrace();
 			return -1;
 		}
 	}
-	
+
 	public void closed(){
 		try{
 			if(pstm!=null)
@@ -88,6 +88,6 @@ public class DB {
 			System.out.println("关闭con对象失败！");
 		}
 	}
-	
+
 
 }
