@@ -1,24 +1,6 @@
 package com.yxq.action;
 
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import org.apache.struts.action.ActionForm;
-import org.apache.struts.action.ActionForward;
-import org.apache.struts.action.ActionMapping;
-import org.apache.struts.action.ActionMessage;
-import org.apache.struts.action.ActionMessages;
-import org.apache.struts.util.LabelValueBean;
-
+import com.mysql.cj.jdbc.Driver;
 import com.yxq.actionform.BbsAnswerForm;
 import com.yxq.actionform.BbsForm;
 import com.yxq.actionform.BoardForm;
@@ -26,6 +8,17 @@ import com.yxq.actionform.UserForm;
 import com.yxq.dao.OpDB;
 import com.yxq.model.CreatePage;
 import com.yxq.tools.Change;
+import org.apache.struts.action.*;
+import org.apache.struts.util.LabelValueBean;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.sql.*;
+import java.util.*;
+import java.util.Date;
 
 public class BbsAction extends MySuperAction {
 	
@@ -208,9 +201,10 @@ public class BbsAction extends MySuperAction {
 			String 	bbsToTopTime="";
 			String 	bbsIsGood="0";
 			String 	bbsToGoodTime="";
-			
-			String sql="insert into tb_bbs values(null,?,?,?,?,now(),?,?,?,null,?,null)";
-			Object[] params={boardId,bbsTitle,bbsContent,bbsSender,bbsFace,bbsOpTime,bbsIsTop,bbsIsGood};
+			String 	bbsjf=Change.HTMLChange(bbsForm.getBbsjf());
+
+			String sql="insert into tb_bbs values(null,?,?,?,?,now(),?,?,?,null,?,null,?)";
+			Object[] params={boardId,bbsTitle,bbsContent,bbsSender,bbsFace,bbsOpTime,bbsIsTop,bbsIsGood,bbsjf};
 			
 			ActionMessages messages=new ActionMessages();			
 			OpDB myOp=new OpDB();
@@ -244,7 +238,7 @@ public class BbsAction extends MySuperAction {
 		String 	bbsSendTime=Change.dateTimeChange(new Date());
 		String 	bbsFace=bbsAnswerForm.getBbsFace();		
 		
-		String sql="insert into tb_bbsAnswer values(null,?,?,?,?,?,?)";
+		String sql="insert into tb_bbsAnswer values(null,?,?,?,?,?,?,0)";
 		Object[] params=new Object[6];
 		
 		params[0]=rootId;
@@ -326,39 +320,146 @@ public class BbsAction extends MySuperAction {
 		saveErrors(request,messages);
 		return mapping.findForward(forwardPath);
 	}
-	
-	/** 删除根帖 
+
+	/** 修改帖子 */
+	public void mcon(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws IOException {
+		request.setCharacterEncoding("utf-8");
+		response.setCharacterEncoding("utf-8");
+		Connection connection = null;
+		Statement statement=null;
+		ResultSet set=null;
+		String p1=null;
+		String p2=null;
+		int i=0;
+		try {
+			Driver driver = new Driver();
+			//DriverManager.registerDriver(driver);由于此方法注册两次驱动所以一般不用
+			Class.forName("com.mysql.cj.jdbc.Driver");//一般使用此方法注册驱动
+			String url = "jdbc:mysql://localhost:3306/db_bbs?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8";
+			String user = "root";
+			String pass = "root";
+			connection = DriverManager.getConnection(url, "root", "root");
+			statement = connection.createStatement();
+			String p=request.getParameter("bbsId");
+			p1=request.getParameter("bbscon");
+			p2=request.getParameter("bbstit");
+			String sq="update tb_bbs set bbs_content='"+p1+"' where bbs_id="+p;
+			String sq1="update tb_bbs set bbs_title='"+p2+"' where bbs_id="+p;
+			i=statement.executeUpdate(sq);
+			statement.executeUpdate(sq1);
+			response.sendRedirect(request.getHeader("Referer"));
+		}catch (Exception e){
+			throw new RuntimeException(e);
+		}
+		finally {
+			if(set!=null) {
+				try {
+					set.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			if(statement!=null) {
+				try {
+					statement.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			if(connection!=null){
+				try {
+					connection.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	/** 采纳回复帖 */
+	public void adjf(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws IOException {
+		Connection connection = null;
+		Statement statement=null;
+		ResultSet set=null;
+		int i=0;
+		try {
+			Driver driver = new Driver();
+			//DriverManager.registerDriver(driver);由于此方法注册两次驱动所以一般不用
+			Class.forName("com.mysql.cj.jdbc.Driver");//一般使用此方法注册驱动
+			String url = "jdbc:mysql://localhost:3306/db_bbs?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8";
+			String user = "root";
+			String pass = "root";
+			connection = DriverManager.getConnection(url, "root", "root");
+			statement = connection.createStatement();
+			String p=request.getParameter("bbsId");
+			String p1=request.getParameter("bbsAnswerId");
+			String p2=request.getParameter("addjf");
+			int i2 =Integer.parseInt(p2);
+			String sq="update tb_user set user_jf=user_jf+"+i2+" where id="+p;
+			i=statement.executeUpdate(sq);
+			String sq1="update tb_bbsanswer set is_cn=is_cn+1 where bbsAnswer_id="+p1;
+			statement.executeUpdate(sq1);
+			response.sendRedirect(request.getHeader("Referer"));
+		}catch (Exception e){
+			throw new RuntimeException(e);
+		}
+		finally {
+			if(set!=null) {
+				try {
+					set.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			if(statement!=null) {
+				try {
+					statement.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			if(connection!=null){
+				try {
+					connection.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+	}
+
+	/** 删除根帖
 	 * @throws UnsupportedEncodingException */
-	public ActionForward deleteRootBbs(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException{		
-		HttpSession session=request.getSession();		
+	public ActionForward deleteRootBbs(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException{
+		HttpSession session=request.getSession();
 		UserForm logoner=(UserForm)session.getAttribute("logoner");
-		
-		String bbsId=request.getParameter("bbsId");						//获取要删除帖子的ID	
+		String bbsId=request.getParameter("bbsId");						//获取要删除帖子的ID
 		String bbsSender=request.getParameter("bbsSender");				//获取要删除帖子的发布者
 		bbsSender=new String(bbsSender.getBytes("ISO-8859-1"));
 		String lognerAble=logoner.getUserAble();						//获取当前登录用户的权限
 		String lognerName=logoner.getUserName();						//获取当前登录用户的用户名
 		String master=(String)session.getAttribute("boardMaster");		//获取当前斑竹
-		
+
 		if(bbsId==null)
 			bbsId="-1";
 		if(bbsSender==null)
-			bbsSender="";		
-		
+			bbsSender="";
+
 		ActionMessages messages=new ActionMessages();
-		
+
     	//如果当前登录的用户是帖子的发表者、帖子所属版面的斑竹、管理员
 		if(lognerAble.equals("2")||lognerName.equals(master)||lognerName.equals(bbsSender)){
-			if(bbsId!=null&&!bbsId.equals("")){						
-				String sql="delete tb_bbs where bbs_id=?";				
+			if(bbsId!=null&&!bbsId.equals("")){
+				String sql="delete from tb_bbs where bbs_id=?";
 				Object[] params={bbsId};
-				
+
 				OpDB myOp=new OpDB();
 				int i=myOp.OpUpdate(sql,params);
 				if(i<=0){
 					System.out.println("删除出错！");
 					messages.add("userOpR",new ActionMessage("luntan.bbs.deleteRoot.E"));
-					saveErrors(request,messages);					
+					saveErrors(request,messages);
 				}
 				else{								//删除成功后，要返回列表显示根帖的页面，该页面有：查看某版面下所有根帖的页面、查看我的帖子的页面、查看精华帖子的页面
 					System.out.println("删除成功！");
@@ -366,22 +467,21 @@ public class BbsAction extends MySuperAction {
 					saveErrors(request,messages);
 					ActionForward forward=new ActionForward("/"+session.getAttribute("servletPath")+"?method="+session.getAttribute("method"));		//因为返回的页面存在以上三种情况，所以返回的视图要在程序中动态指定
 					return forward;
-				}				
+				}
 			}
 			return mapping.findForward("error");
 		}
 		else{
-			System.out.println("您没有权限删除该帖子!");			
+			System.out.println("您没有权限删除该帖子!");
 			messages.add("userOpR",new ActionMessage("luntan.bbs.deleteRoot.N"));
 			saveErrors(request,messages);
 			return mapping.findForward("error");
-		}		
+		}
 	}
-	
+
 	/** 查看帖子的发表者的详细信息 */
-	public ActionForward getUserSingle(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response){
+	public ActionForward getUserSingle(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
 		HttpSession session=request.getSession();
-		
 		String userName=request.getParameter("userName");
 		if(userName==null)
 			userName="";		
@@ -391,7 +491,7 @@ public class BbsAction extends MySuperAction {
 			userName="";
 			e.printStackTrace();
 		}
-		
+		System.out.println(userName);
 		ActionMessages messages=new ActionMessages();
 		String forwardPath="";
 		
