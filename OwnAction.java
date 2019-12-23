@@ -1,18 +1,16 @@
 package com.yxq.action;
 
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+import com.yxq.actionform.UserForm;
+import com.yxq.dao.OpDB;
+import com.yxq.model.CreatePage;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import com.yxq.actionform.UserForm;
-import com.yxq.dao.OpDB;
-import com.yxq.model.CreatePage;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.util.List;
 
 public class OwnAction extends MySuperAction {
 	
